@@ -16,7 +16,7 @@ Future<void> main() async {
     print("sdfs");
     if (request.uri.path == '/ws') {
       try {
-        Completer completer = Completer();
+        Completer<Map<String, dynamic>> completer = Completer();
         // Upgrade an HttpRequest to a WebSocket connection
         var socket = await WebSocketTransformer.upgrade(request);
         print('Client connected!');
@@ -35,8 +35,7 @@ Future<void> main() async {
           print('Received message: $message');
         });
 
-        final Map<String, dynamic> firstAnswer =
-            jsonDecode(await completer.future);
+        final Map<String, dynamic> firstAnswer = await completer.future;
         completer = Completer();
         if (firstAnswer['username'] == null ||
             firstAnswer['bankScore'] == null ||
