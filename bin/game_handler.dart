@@ -75,14 +75,16 @@ class GameHandler {
   }
 
   Future sendToAll(Iterable<User> players, Map<String, dynamic> message) async {
+    final List<User> playersList = players.toList();
     final List<Future> futures =
-        players.map((e) => secureSend(e, message)).toList();
+        playersList.map((e) => secureSend(e, message)).toList();
     await Future.wait(futures);
   }
 
   Future dispose() async {
     currentGames.remove(game.gameID);
-    final List<Future> futures = game.players
+    final List<User> players = game.players;
+    final List<Future> futures = players
         .map((e) => e.dispose().onError((error, stackTrace) => print(error)))
         .toList();
     await Future.wait(futures);
