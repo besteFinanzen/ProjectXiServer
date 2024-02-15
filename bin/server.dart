@@ -9,7 +9,7 @@ import 'models/user.dart';
 
 final Map<String, GameHandler> currentGames = {};
 Future<void> main() async {
-  var server = await HttpServer.bind(InternetAddress.loopbackIPv4, 1234);
+  var server = await HttpServer.bind(InternetAddress.anyIPv4, 1234);
   print('Listening on ${server.address.host}:${server.port}');
 
   await for (HttpRequest request in server) {
