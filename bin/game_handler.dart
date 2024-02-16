@@ -55,6 +55,8 @@ class GameHandler {
       await GameMoves(this).rolltheDice(player);
       await Future.delayed(Duration(seconds: 10));
     }
+    await GameMoves(this).finishGame();
+    await Future.delayed(Duration(seconds: 20));
     await dispose();
   }
 
@@ -64,6 +66,7 @@ class GameHandler {
 
   Future secureSend(User player, Map<String, dynamic> message) async {
     try {
+      print(message);
       player.send(jsonEncode(
         message,
       ));
@@ -76,8 +79,10 @@ class GameHandler {
 
   Future sendToAll(Iterable<User> players, Map<String, dynamic> message) async {
     final List<User> playersList = players.toList();
-    final List<Future> futures =
-        playersList.map((e) => secureSend(e, message)).toList();
+    final List<Future> futures = playersList
+        .map((e) =>
+            secureSend(e, message).onError((error, stackTrace) => print(error)))
+        .toList();
     await Future.wait(futures);
   }
 

@@ -132,11 +132,13 @@ class GameMoves {
   }
 
   Future finishGame() async {
+    final List<Map<String, dynamic>> players =
+        gameHandler.game.players.map((e) => e.toSendableJson()).toList();
+    print(players);
     await gameHandler.sendToAll(gameHandler.game.players, {
       'message': 'The game has finished',
       'action': 'finishedGame',
-      'players':
-          List.of(gameHandler.game.players).map((e) => e.toSendableJson()),
+      'players': players,
       'betAmount': gameHandler.game.bettedAmount
     });
   }

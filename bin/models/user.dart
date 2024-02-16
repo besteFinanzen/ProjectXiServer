@@ -100,7 +100,7 @@ class User {
 
   Future dispose() async {
     await socket.close();
-    await socketStream.close();
+    //await socketStream.close();
   }
 }
 
