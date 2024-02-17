@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'user.dart';
 
 class Game {
@@ -10,7 +12,7 @@ class Game {
   late final int _maxAmount;
   bool _started = false;
 
-  int bettedAmount = 0;
+  int _bettedAmount = 0;
 
   Game({required this.gameID, required User player, final bool started = false})
       : host = player,
@@ -21,6 +23,18 @@ class Game {
   int get minAmount => _minAmount;
   int get maxAmount => _maxAmount;
 
+  int get bettedAmount => _bettedAmount;
+
+  set bettedAmount(int amount) {
+    for (User player in players) {
+      if (player.bankScore < amount) {
+        throw Exception('The amount betted must be less than the bank score');
+      }
+      player.bankScore -= amount;
+    }
+    _bettedAmount = amount;
+  }
+
   int getMaxMoneyAllPlayersHave() {
     int max = players.first.bankScore;
     for (User player in players) {
@@ -29,6 +43,10 @@ class Game {
       }
     }
     return max;
+  }
+
+  int getMaxMoneyBetable() {
+    return min(maxAmount, getMaxMoneyAllPlayersHave());
   }
 
   void setBetRange(final int min, final int max) {

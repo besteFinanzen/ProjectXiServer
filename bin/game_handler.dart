@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'game_parts.dart';
-import 'models/dice.dart';
 import 'models/game.dart';
 import 'models/user.dart';
 import 'server.dart';
@@ -16,7 +15,7 @@ extension UserPart on Map<String, dynamic> {
 }
 
 class GameHandler {
-  final Game game;
+  Game game;
 
   GameHandler(this.game);
 
@@ -37,31 +36,59 @@ class GameHandler {
         return;
       }
     });
-    final Completer startGameListener = Completer();
+    final Completer<bool> startGameListener = Completer();
     host.socketStream.stream.listen((event) {
       if (event['action'] == 'startGame') {
-        startGameListener.complete();
+        startGameListener.complete(true);
       }
     });
-    await startGameListener.future;
 
-    startGame();
-
-    //TODO what to do with betting max/min
-    game.setBetRange(200, 500);
-
-    //First player to play
-    for (User player in game.players) {
-      await GameMoves(this).rolltheDice(player);
-      await Future.delayed(Duration(seconds: 10));
+    Future.delayed(Duration(minutes: 10)).then((value) async {
+      if (!startGameListener.isCompleted) {
+        startGameListener.complete(false);
+        await _quitGame('The game has been cancelled due to inactivity');
+      }
+    });
+    if (!(await startGameListener.future)) {
+      return;
     }
+
+    game.setBetRange(200, 500); //only important for games with 2 players
+    game.bettedAmount = 200; //only important for games with 2 players
+    await startGame();
+
+    //TODO differenciate between two or more than two players
+    if (game.players.length == 2) {
+      //TODO show screen in which every player automatically sets the minimum into the pot
+
+      //First player to play
+      for (User player in game.players) {
+        while (!player.finishedRoll) {
+          await GameMoves(this).rolltheDice(player);
+          if (!(await GameMoves(this).bet())) {
+            await GameMoves(this).finishGame();
+            await dispose();
+            return;
+          }
+          print(player.finishedRoll);
+        }
+      }
+    }
+
     await GameMoves(this).finishGame();
-    await Future.delayed(Duration(seconds: 20));
     await dispose();
   }
 
-  void startGame() async {
+  Future startGame() async {
     game.startGame();
+    if (game.players.length == 2) {
+      await sendToAll(game.players, {
+        'message': 'The game has started',
+        'action': 'startGame',
+        'initialPot': game.bettedAmount,
+      });
+      await Future.delayed(Duration(seconds: 7));
+    }
   }
 
   Future secureSend(User player, Map<String, dynamic> message) async {
@@ -115,13 +142,16 @@ class GameHandler {
             'action': 'removePlayer',
           }.addUserPart(player));
     } else {
-      if (game.players.length < 2) {
+      if (game.players.length < 2 && game.started) {
         //TODO Give the money to the remaining player
         await sendToAll(game.players, {
           'message': 'The game has ended',
           'action': 'endGame',
         });
         await dispose();
+        return;
+      } else if (game.players.isEmpty) {
+        await _quitGame('The host has left the game');
         return;
       }
       if (game.host == player) {
@@ -140,10 +170,25 @@ class GameHandler {
 
   Future addPlayerToGame(User player) async {
     if (game.players.contains(player)) {
-      await secureSend(player, {
-        'message': 'You are already in the game',
-        'action': 'waiting',
-      });
+      if (player.lastInstruction.isEmpty) {
+        await secureSend(player, {
+          'message': 'You are already in the game',
+          'action': 'waiting',
+        });
+        return;
+      }
+      for (String instruction in player.lastInstruction) {
+        await secureSend(player, jsonDecode(instruction));
+      }
+      for (User competitor in game.players) {
+        if (competitor == player) continue;
+        await secureSend(
+            player,
+            {
+              'message': 'You are playing with ${competitor.username}',
+              'action': 'addPlayer',
+            }.addUserPart(competitor));
+      }
       return;
     }
     await secureSend(player, {

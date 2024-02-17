@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'constants.dart';
 import 'game_handler.dart';
 import 'models/game.dart';
 import 'models/user.dart';
@@ -16,7 +17,8 @@ Future<void> main() async {
     print("sdfs");
     if (request.uri.path == '/ws') {
       try {
-        Completer<Map<String, dynamic>> completer = Completer();
+        final Completer<Map<String, dynamic>> completer = Completer();
+        final Completer overTime = Completer();
         // Upgrade an HttpRequest to a WebSocket connection
         var socket = await WebSocketTransformer.upgrade(request);
         print('Client connected!');
@@ -28,15 +30,30 @@ Future<void> main() async {
             .addStream(secureStream(socket).asBroadcastStream(onCancel: (sub) {
           sub.cancel();
         }));
+
+        Future.delayed(Constants.maxAnswerTime).then((value) {
+          if (!completer.isCompleted) {
+            overTime.complete();
+            completer.complete({});
+          }
+        });
+
         // Listen for incoming messages from the client
         streamController.stream.listen((message) {
+          if (completer.isCompleted) {
+            return;
+          }
           completer.complete(message);
-          completer = Completer();
           print('Received message: $message');
         });
 
         final Map<String, dynamic> firstAnswer = await completer.future;
-        completer = Completer();
+        if (overTime.isCompleted) {
+          request.response.statusCode = HttpStatus.requestTimeout;
+          request.response.close();
+          continue;
+        }
+
         if (firstAnswer['username'] == null ||
             firstAnswer['bankScore'] == null ||
             firstAnswer['id'] == null) {
@@ -104,7 +121,7 @@ Map<String, dynamic>? convertToMessage(String event) {
   try {
     return jsonDecode(event);
   } catch (e) {
-    print('Error decoding message: $e,\message: $event');
+    print('Error decoding message: $e, message: $event');
     return null;
   }
 }

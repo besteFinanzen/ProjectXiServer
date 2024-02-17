@@ -11,8 +11,14 @@ You can run the example with the [Dart SDK](https://dart.dev/get-dart)
 like this:
 
 ```
-$ dart run bin/server.dart
+$ nohup dart run bin/server.dart &
 Server listening on port 8080
+```
+
+Stop the server by
+```
+ps -ef | grep dart run
+kill <pid>
 ```
 
 And then from a second terminal:
