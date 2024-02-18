@@ -85,8 +85,9 @@ class GameMoves {
     );
 
     Future.delayed(Constants.maxAnswerTime).then((value) {
-      if (overTime.isCompleted) return;
+      if (rolledDice.isCompleted) return;
       overTime.complete();
+      player.folded();
       rolledDice.complete(true);
     });
 
@@ -94,7 +95,7 @@ class GameMoves {
       if (overTime.isCompleted) {
         return false;
       }
-      await Future.delayed(Duration(seconds: 13));
+      await Future.delayed(Duration(seconds: 10));
     }
     print('sdfsdfsdfsdfsdfas');
 
@@ -113,7 +114,6 @@ class GameMoves {
 
   Future<bool> bet() async {
     final List<User> players = gameHandler.game.players;
-    Completer overTime = Completer();
     final Completer<int> firstBetted = Completer();
     await gameHandler.sendToAll(
       players,
@@ -163,15 +163,11 @@ class GameMoves {
 
     Future.delayed(Constants.maxAnswerTime).then((value) {
       if (firstBetted.isCompleted) return;
-      overTime.complete();
-      firstBetted.complete(0);
+      players.first.folded();
+      firstBetted.complete(-1);
     });
 
     final int raised = await firstBetted.future;
-    if (overTime.isCompleted) {
-      return false;
-    }
-    overTime = Completer();
     final Completer<int> secondBetted = Completer();
 
     players[1].socketStream.stream.listen((event) async {
@@ -216,22 +212,17 @@ class GameMoves {
 
     Future.delayed(Constants.maxAnswerTime).then((value) {
       if (secondBetted.isCompleted) return;
-      overTime.complete();
-      secondBetted.complete(0);
+      players[1].folded();
+      secondBetted.complete(-1);
     });
 
     final int raised2 = await secondBetted.future;
-
-    if (overTime.isCompleted) {
-      return false;
-    }
 
     if (raised2 == -1) {
       return false;
     }
 
     if (!(raised2 == 0 && raised >= 0)) {
-      overTime = Completer();
       final Completer thirdBetted = Completer();
 
       players.first.socketStream.stream.listen((event) async {
@@ -267,15 +258,11 @@ class GameMoves {
 
       Future.delayed(Constants.maxAnswerTime).then((value) {
         if (thirdBetted.isCompleted) return;
-        overTime.complete();
-        thirdBetted.complete(0);
+        players[0].folded();
+        thirdBetted.complete(-1);
       });
 
       final int raised3 = await thirdBetted.future;
-
-      if (overTime.isCompleted) {
-        return false;
-      }
 
       if (raised3 == -1) {
         return false;

@@ -20,63 +20,71 @@ class GameHandler {
   GameHandler(this.game);
 
   Future start() async {
-    final User host = game.host;
-    await secureSend(host, {
-      'message': 'You are the host of the game',
-      'gameID': game.gameID,
-      'action': 'waiting',
-    });
-    print('Host is ${host.username}');
-    host.isOffline.stream.listen((event) async {
-      if (event && !game.started && host == game.host) {
-        await _quitGame('The host has left the game');
+    try {
+      final User host = game.host;
+      await secureSend(host, {
+        'message': 'You are the host of the game',
+        'gameID': game.gameID,
+        'action': 'waiting',
+      });
+      print('Host is ${host.username}');
+      host.isOffline.stream.listen((event) async {
+        if (event && !game.started && host == game.host) {
+          await _quitGame('The host has left the game');
+          return;
+        } else if (event) {
+          await removePlayerFromGame(host);
+          return;
+        }
+      });
+      final Completer<bool> startGameListener = Completer();
+      host.socketStream.stream.listen((event) {
+        if (event['action'] == 'startGame') {
+          startGameListener.complete(true);
+        }
+      });
+
+      Future.delayed(Duration(minutes: 10)).then((value) async {
+        if (!startGameListener.isCompleted) {
+          startGameListener.complete(false);
+          await _quitGame('The game has been cancelled due to inactivity');
+        }
+      });
+      if (!(await startGameListener.future)) {
         return;
-      } else if (event) {
-        await removePlayerFromGame(host);
-        return;
       }
-    });
-    final Completer<bool> startGameListener = Completer();
-    host.socketStream.stream.listen((event) {
-      if (event['action'] == 'startGame') {
-        startGameListener.complete(true);
-      }
-    });
 
-    Future.delayed(Duration(minutes: 10)).then((value) async {
-      if (!startGameListener.isCompleted) {
-        startGameListener.complete(false);
-        await _quitGame('The game has been cancelled due to inactivity');
-      }
-    });
-    if (!(await startGameListener.future)) {
-      return;
-    }
+      game.setBetRange(200, 500); //only important for games with 2 players
+      game.bettedAmount = 200; //only important for games with 2 players
+      await startGame();
 
-    game.setBetRange(200, 500); //only important for games with 2 players
-    game.bettedAmount = 200; //only important for games with 2 players
-    await startGame();
+      //TODO differenciate between two or more than two players
+      if (game.players.length == 2) {
+        //TODO show screen in which every player automatically sets the minimum into the pot
 
-    //TODO differenciate between two or more than two players
-    if (game.players.length == 2) {
-      //TODO show screen in which every player automatically sets the minimum into the pot
-
-      //First player to play
-      for (User player in game.players) {
-        while (!player.finishedRoll) {
-          await GameMoves(this).rolltheDice(player);
-          if (!(await GameMoves(this).bet())) {
-            await GameMoves(this).finishGame();
-            await dispose();
-            return;
+        //First player to play
+        for (User player in game.players) {
+          while (!player.finishedRoll) {
+            if (!(await GameMoves(this).rolltheDice(player))) {
+              await GameMoves(this).finishGame();
+              await dispose();
+              return;
+            }
+            if (!(await GameMoves(this).bet())) {
+              await GameMoves(this).finishGame();
+              await dispose();
+              return;
+            }
           }
-          print(player.finishedRoll);
         }
       }
-    }
 
-    await GameMoves(this).finishGame();
-    await dispose();
+      await GameMoves(this).finishGame();
+      await dispose();
+    } catch (e) {
+      print(e);
+      await dispose();
+    }
   }
 
   Future startGame() async {

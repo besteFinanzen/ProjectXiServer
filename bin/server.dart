@@ -61,7 +61,8 @@ Future<void> main() async {
           request.response.close();
         }
         if (firstAnswer['gameID'] != null) {
-          if (!(currentGames.containsKey(firstAnswer['gameID']))) {
+          if (!(currentGames.containsKey(firstAnswer['gameID'])) ||
+              currentGames[firstAnswer['gameID']]!.game.players.length >= 2) {
             request.response.statusCode = HttpStatus.notFound;
             request.response.close();
             continue;
