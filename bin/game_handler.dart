@@ -60,8 +60,6 @@ class GameHandler {
 
       //TODO differenciate between two or more than two players
       if (game.players.length == 2) {
-        //TODO show screen in which every player automatically sets the minimum into the pot
-
         //First player to play
         for (User player in game.players) {
           while (!player.finishedRoll) {

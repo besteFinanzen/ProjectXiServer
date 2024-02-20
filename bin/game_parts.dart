@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'constants.dart';
 import 'game_handler.dart';
 import 'models/dice.dart';
@@ -288,46 +287,7 @@ class GameMoves {
       return player.score;
     }
     List<DiceSide> roll = player.lastRoll!;
-    //Five of a kind
-    if (roll.toSet().length == 1) {
-      return 50;
-    }
-    //Four of a kind
-    if (roll
-        .where((element) => roll.where((e) => e == element).length == 4)
-        .isNotEmpty) {
-      return 40;
-    }
-    //Full house
-    if (roll
-            .where((element) => roll.where((e) => e == element).length == 3)
-            .isNotEmpty &&
-        roll
-            .where((element) => roll.where((e) => e == element).length == 2)
-            .isNotEmpty) {
-      return 30;
-    }
-    //High straight
-    if (roll.toSet().length == 5 &&
-        roll.contains(DiceSide.ass) &&
-        !roll.contains(DiceSide.nine)) {
-      return 20;
-    }
-    //Low straight
-    if (roll.toSet().length == 5 &&
-        roll.contains(DiceSide.nine) &&
-        !roll.contains(DiceSide.ass)) {
-      return 15;
-    }
-    //One Pair
-    if (roll
-            .where((element) => roll.where((e) => e == element).length == 2)
-            .length ==
-        2) {
-      return 10;
-    }
-    //Runt
-    return 5;
+    return roll.calculateRoll;
   }
 
   Future<bool> finishGame() async {
