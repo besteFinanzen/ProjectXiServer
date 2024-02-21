@@ -58,6 +58,7 @@ Future<void> main() async {
             firstAnswer['id'] == null) {
           request.response.statusCode = HttpStatus.badRequest;
           request.response.close();
+          continue;
         }
         if (firstAnswer['gameID'] != null) {
           if (!(currentGames.containsKey(firstAnswer['gameID']))) {
