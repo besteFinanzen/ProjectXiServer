@@ -87,7 +87,7 @@ class GameMoves {
             : Duration(seconds: 20))
         .then((value) {
       if (rolledDice.isCompleted) return;
-      overTime.complete();
+      if (player.lastRoll != null) overTime.complete();
       player.folded();
       rolledDice.complete(true);
     });
