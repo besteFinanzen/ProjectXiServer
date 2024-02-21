@@ -82,7 +82,10 @@ class GameMoves {
       }.addUserPart(player),
     );
 
-    Future.delayed(Constants.maxAnswerTime).then((value) {
+    Future.delayed(player.lastRoll != null
+            ? Constants.maxAnswerTime
+            : Duration(seconds: 20))
+        .then((value) {
       if (rolledDice.isCompleted) return;
       overTime.complete();
       player.folded();
