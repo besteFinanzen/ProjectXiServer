@@ -67,6 +67,7 @@ class GameHandler {
             return;
           }
           if (game.players.length != 2) continue playersTurn;
+          if (player.finishedRoll) continue;
           if (!(await GameMoves(this).bet())) {
             await GameMoves(this).finishGame();
             await dispose();
