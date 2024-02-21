@@ -85,14 +85,12 @@ class GameHandler {
 
   Future startGame() async {
     game.startGame();
-    if (game.players.length == 2) {
-      await sendToAll(game.players, {
-        'message': 'The game has started',
-        'action': 'startGame',
-        'initialPot': game.bettedAmount,
-      });
-      await Future.delayed(Duration(seconds: 7));
-    }
+    await sendToAll(game.players, {
+      'message': 'The game has started',
+      'action': 'startGame',
+      'initialPot': game.bettedAmount,
+    });
+    await Future.delayed(Duration(seconds: 7));
   }
 
   Future secureSend(User player, Map<String, dynamic> message) async {
