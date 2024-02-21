@@ -87,13 +87,15 @@ class GameMoves {
             : Duration(seconds: 20))
         .then((value) {
       if (rolledDice.isCompleted) return;
-      if (player.lastRoll != null) overTime.complete();
-      player.folded();
+      if (player.lastRoll != null) {
+        overTime.complete();
+        player.folded();
+      }
       rolledDice.complete(true);
     });
 
     if (await rolledDice.future) {
-      if (overTime.isCompleted && player.lastRoll != null) {
+      if (overTime.isCompleted) {
         return false;
       }
       await Future.delayed(Duration(seconds: 10));
