@@ -27,7 +27,7 @@ class GameMoves {
         print('Dice ended');
       } else if (event['action'] == 'reRollDice') {
         print('Rerolling dices');
-        print(rolledDice.isCompleted);
+        if (rolledDice.isCompleted) return;
         if (player.reRoll && !rolledDice.isCompleted) {
           final List<int> wantedChanges = event['indexes'].cast<int>();
           print(wantedChanges);
@@ -39,7 +39,6 @@ class GameMoves {
               dices[i] = Dice.roll();
             }
           }
-          print('Rerolled dices: $dices');
           await gameHandler.secureSend(player, {
             'message': 'You rerolled the dice',
             'action': 'reRollDice',

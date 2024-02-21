@@ -14,7 +14,6 @@ Future<void> main() async {
   print('Listening on ${server.address.host}:${server.port}');
 
   await for (HttpRequest request in server) {
-    print("sdfs");
     if (request.uri.path == '/ws') {
       try {
         final Completer<Map<String, dynamic>> completer = Completer();
@@ -61,8 +60,7 @@ Future<void> main() async {
           request.response.close();
         }
         if (firstAnswer['gameID'] != null) {
-          if (!(currentGames.containsKey(firstAnswer['gameID'])) ||
-              currentGames[firstAnswer['gameID']]!.game.players.length >= 2) {
+          if (!(currentGames.containsKey(firstAnswer['gameID']))) {
             request.response.statusCode = HttpStatus.notFound;
             request.response.close();
             continue;
@@ -76,8 +74,8 @@ Future<void> main() async {
           currentGames[firstAnswer['gameID']]!.addPlayerToGame(user);
           continue;
         } else {
-          String gameID = '0000';
-          while (gameID == '0000' || currentGames.containsKey(gameID)) {
+          String? gameID;
+          while (gameID == null || currentGames.containsKey(gameID)) {
             gameID = (Random().nextInt(8999) + 1000).toString();
           }
           final User user = User(

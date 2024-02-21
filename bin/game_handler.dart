@@ -58,16 +58,17 @@ class GameHandler {
       game.bettedAmount = 200; //only important for games with 2 players
       await startGame();
 
-      //TODO differenciate between two or more than two players
       if (game.players.length == 2) {
         //First player to play
         for (User player in game.players) {
+          playersTurn:
           while (!player.finishedRoll) {
             if (!(await GameMoves(this).rolltheDice(player))) {
               await GameMoves(this).finishGame();
               await dispose();
               return;
             }
+            if (game.players.length != 2) continue playersTurn;
             if (!(await GameMoves(this).bet())) {
               await GameMoves(this).finishGame();
               await dispose();
