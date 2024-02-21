@@ -90,12 +90,11 @@ class GameMoves {
     });
 
     if (await rolledDice.future) {
-      if (overTime.isCompleted) {
+      if (overTime.isCompleted && player.lastRoll != null) {
         return false;
       }
       await Future.delayed(Duration(seconds: 10));
     }
-    print('sdfsdfsdfsdfsdfas');
 
     await gameHandler.sendToAll(
       gameHandler.game.players.where((element) => element != player),
