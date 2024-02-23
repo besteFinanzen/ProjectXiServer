@@ -36,6 +36,7 @@ class Game {
   }
 
   int getMaxMoneyAllPlayersHave() {
+    if (!players.hasEnoughPlayers()) return 1000;
     int max = players.first.bankScore;
     for (User player in players) {
       if (player.bankScore < max) {

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../game_handler.dart';
 import '../game_parts.dart';
 import 'dice.dart';
 import 'value_notifier.dart';
@@ -137,4 +136,10 @@ class OfflineException implements Exception {
   final User user;
 
   OfflineException(this.message, this.user);
+}
+
+extension Players on List<User> {
+  bool hasEnoughPlayers() {
+    return length > 1;
+  }
 }

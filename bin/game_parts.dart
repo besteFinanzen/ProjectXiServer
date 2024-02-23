@@ -90,6 +90,8 @@ class GameMoves {
       if (player.lastRoll != null) {
         overTime.complete();
         player.folded();
+      } else {
+        player.setLastRoll(dices);
       }
       rolledDice.complete(true);
     });
@@ -98,7 +100,7 @@ class GameMoves {
       if (overTime.isCompleted) {
         return false;
       }
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(Duration(seconds: 12));
     }
 
     await gameHandler.sendToAll(
@@ -127,7 +129,7 @@ class GameMoves {
         'currentBet': gameHandler.game.bettedAmount,
       },
     );
-    players.first.socketStream.stream.listen((event) async {
+    players.firstOrNull?.socketStream.stream.listen((event) async {
       if (firstBetted.isCompleted) return;
       if (event['action'] == 'raiseBet') {
         final int amount = event['amount'];
@@ -141,6 +143,7 @@ class GameMoves {
       } else if (event['action'] == 'check') {
         firstBetted.complete(0);
       }
+      if (!players.hasEnoughPlayers()) return;
       await gameHandler.secureSend(
         players.first,
         {
@@ -152,7 +155,7 @@ class GameMoves {
         },
       );
     });
-
+    if (!players.hasEnoughPlayers()) return false;
     await gameHandler.secureSend(
       players.first,
       {
@@ -165,13 +168,14 @@ class GameMoves {
 
     Future.delayed(Constants.maxAnswerTime).then((value) {
       if (firstBetted.isCompleted) return;
-      players.first.folded();
+      players.firstOrNull?.folded();
       firstBetted.complete(-1);
     });
 
     final int raised = await firstBetted.future;
     final Completer<int> secondBetted = Completer();
 
+    if (players.length < 2) return false;
     players[1].socketStream.stream.listen((event) async {
       if (secondBetted.isCompleted) return;
       if (event['action'] == 'raiseBet') {
@@ -186,9 +190,10 @@ class GameMoves {
       } else if (event['action'] == 'check') {
         secondBetted.complete(0);
       } else if (event['action'] == 'fold') {
-        players[1].folded();
+        if (players.length >= 2) players[1].folded();
         secondBetted.complete(-1);
       }
+      if (players.length < 2) return;
       await gameHandler.secureSend(
         players[1],
         {
@@ -201,6 +206,7 @@ class GameMoves {
       );
     });
 
+    if (players.length < 2) return false;
     await gameHandler.secureSend(
       players[1],
       {
@@ -214,7 +220,7 @@ class GameMoves {
 
     Future.delayed(Constants.maxAnswerTime).then((value) {
       if (secondBetted.isCompleted) return;
-      players[1].folded();
+      if (players.length >= 2) players[1].folded();
       secondBetted.complete(-1);
     });
 
@@ -227,14 +233,16 @@ class GameMoves {
     if (!(raised2 == 0 && raised >= 0)) {
       final Completer thirdBetted = Completer();
 
+      if (!players.hasEnoughPlayers()) return false;
       players.first.socketStream.stream.listen((event) async {
         if (thirdBetted.isCompleted) return;
         if (event['action'] == 'check') {
           thirdBetted.complete(0);
         } else if (event['action'] == 'fold') {
-          players[0].folded();
+          if (players.hasEnoughPlayers()) players.first.folded();
           thirdBetted.complete(-1);
         }
+        if (!players.hasEnoughPlayers()) return;
         await gameHandler.secureSend(
           players.first,
           {
@@ -246,7 +254,7 @@ class GameMoves {
           },
         );
       });
-
+      if (!players.hasEnoughPlayers()) return false;
       await gameHandler.secureSend(
         players.first,
         {

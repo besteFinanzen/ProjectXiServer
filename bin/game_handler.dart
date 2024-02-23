@@ -130,6 +130,7 @@ class GameHandler {
     await sendToAll(game.players, {
       'message': reason ?? 'The game has ended',
       'action': 'endGame',
+      'betAmount': game.bettedAmount,
     });
     await dispose();
     return;
@@ -147,11 +148,7 @@ class GameHandler {
     } else {
       if (game.players.length < 2 && game.started) {
         //TODO Give the money to the remaining player
-        await sendToAll(game.players, {
-          'message': 'The game has ended',
-          'action': 'endGame',
-        });
-        await dispose();
+        await _quitGame('The game has been cancelled due to inactivity');
         return;
       } else if (game.players.isEmpty) {
         await _quitGame('The host has left the game');

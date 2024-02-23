@@ -48,22 +48,22 @@ Future<void> main() async {
 
         final Map<String, dynamic> firstAnswer = await completer.future;
         if (overTime.isCompleted) {
-          request.response.statusCode = HttpStatus.requestTimeout;
-          request.response.close();
+          //request.response.statusCode = HttpStatus.requestTimeout;
+          await socket.close();
           continue;
         }
 
         if (firstAnswer['username'] == null ||
             firstAnswer['bankScore'] == null ||
             firstAnswer['id'] == null) {
-          request.response.statusCode = HttpStatus.badRequest;
-          request.response.close();
+          //requst.response.statusCode = HttpStatus.badRequest;
+          await socket.close();
           continue;
         }
         if (firstAnswer['gameID'] != null) {
           if (!(currentGames.containsKey(firstAnswer['gameID']))) {
-            request.response.statusCode = HttpStatus.notFound;
-            request.response.close();
+            //request.response.statusCode = HttpStatus.notFound;
+            await socket.close();
             continue;
           }
           final User user = User(
@@ -99,10 +99,11 @@ Future<void> main() async {
         }
       } catch (e) {
         print(e);
+        continue;
       }
     } else {
       request.response.statusCode = HttpStatus.forbidden;
-      request.response.close();
+      await request.response.close();
       continue;
     }
   }
