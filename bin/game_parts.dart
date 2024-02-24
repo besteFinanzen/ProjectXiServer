@@ -295,7 +295,7 @@ class GameMoves {
   static int calculateScore(User player) {
     if (player.lastRoll == null && player.score != -100) {
       print('The player has not rolled the dice');
-      return -100;
+      return 0;
     } else if (player.score == -100) {
       return player.score;
     }
