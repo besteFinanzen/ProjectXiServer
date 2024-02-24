@@ -15,14 +15,14 @@ class GameMoves {
     List<DiceSide> dices =
         player.lastRoll ?? List.generate(5, (index) => Dice.roll());
     print(dices);
+    final bool isFirstRoll = player.lastRoll == null;
     player.socketStream.stream.listen((event) async {
       print(event);
       if (event['action'] == 'endDice') {
         if (rolledDice.isCompleted) return;
-        if (player.lastRoll != null || gameHandler.game.players.length != 2) {
+        if (isFirstRoll || gameHandler.game.players.length != 2) {
           player.finishedRoll = true;
         }
-        player.setLastRoll(dices);
         rolledDice.complete(false);
         print('Dice ended');
       } else if (event['action'] == 'reRollDice') {
@@ -61,6 +61,7 @@ class GameMoves {
         }
       }
     });
+    player.setLastRoll(dices);
     await gameHandler.secureSend(
       player,
       {
@@ -68,7 +69,7 @@ class GameMoves {
         'action': 'rollDice',
         'dices': dices.map((e) => e.toString()).toList(),
         'reRollsLeft': player.reRollAmount,
-        'isFirstRoll': (player.lastRoll == null),
+        'isFirstRoll': isFirstRoll,
       },
     );
     await gameHandler.sendToAll(
@@ -78,7 +79,7 @@ class GameMoves {
         'action': 'otherDice',
         'reRollsLeft': player.reRollAmount,
         'dices': dices.map((e) => e.toString()).toList(),
-        'isFirstRoll': (player.lastRoll == null),
+        'isFirstRoll': isFirstRoll,
       }.addUserPart(player),
     );
 
@@ -87,7 +88,7 @@ class GameMoves {
             : Duration(seconds: 20))
         .then((value) {
       if (rolledDice.isCompleted) return;
-      if (player.lastRoll != null) {
+      if (isFirstRoll) {
         overTime.complete();
         player.folded();
       } else {
