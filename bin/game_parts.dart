@@ -175,7 +175,7 @@ class GameMoves {
     final int raised = await firstBetted.future;
     final Completer<int> secondBetted = Completer();
 
-    if (players.length < 2) return false;
+    if (!players.hasEnoughPlayers()) return false;
     players[1].socketStream.stream.listen((event) async {
       if (secondBetted.isCompleted) return;
       if (event['action'] == 'raiseBet') {
@@ -190,10 +190,10 @@ class GameMoves {
       } else if (event['action'] == 'check') {
         secondBetted.complete(0);
       } else if (event['action'] == 'fold') {
-        if (players.length >= 2) players[1].folded();
+        if (players.hasEnoughPlayers()) players[1].folded();
         secondBetted.complete(-1);
       }
-      if (players.length < 2) return;
+      if (!players.hasEnoughPlayers()) return;
       await gameHandler.secureSend(
         players[1],
         {
@@ -206,7 +206,7 @@ class GameMoves {
       );
     });
 
-    if (players.length < 2) return false;
+    if (!players.hasEnoughPlayers()) return false;
     await gameHandler.secureSend(
       players[1],
       {
@@ -220,7 +220,7 @@ class GameMoves {
 
     Future.delayed(Constants.maxAnswerTime).then((value) {
       if (secondBetted.isCompleted) return;
-      if (players.length >= 2) players[1].folded();
+      if (players.hasEnoughPlayers()) players[1].folded();
       secondBetted.complete(-1);
     });
 
@@ -268,7 +268,7 @@ class GameMoves {
 
       Future.delayed(Constants.maxAnswerTime).then((value) {
         if (thirdBetted.isCompleted) return;
-        players[0].folded();
+        if (players.hasEnoughPlayers()) players.first.folded();
         thirdBetted.complete(-1);
       });
 
@@ -293,7 +293,8 @@ class GameMoves {
 
   static int calculateScore(User player) {
     if (player.lastRoll == null && player.score != -100) {
-      throw Exception('The player has not rolled the dice');
+      print('The player has not rolled the dice');
+      return -100;
     } else if (player.score == -100) {
       return player.score;
     }
