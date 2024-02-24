@@ -132,6 +132,18 @@ class GameMoves {
     );
     players.firstOrNull?.socketStream.stream.listen((event) async {
       if (firstBetted.isCompleted) return;
+      if (players.hasEnoughPlayers()) {
+        await gameHandler.secureSend(
+          players.first,
+          {
+            'message': 'You have made a bet',
+            'action': 'startBet',
+            'lastDices': players.map((e) => e.toSendableJson()).toList(),
+            'maxBet': gameHandler.game.getMaxMoneyBetable(),
+            'currentBet': gameHandler.game.bettedAmount,
+          },
+        );
+      }
       if (event['action'] == 'raiseBet') {
         final int amount = event['amount'];
         try {
@@ -144,17 +156,6 @@ class GameMoves {
       } else if (event['action'] == 'check') {
         firstBetted.complete(0);
       }
-      if (!players.hasEnoughPlayers()) return;
-      await gameHandler.secureSend(
-        players.first,
-        {
-          'message': 'You have made a bet',
-          'action': 'startBet',
-          'lastDices': players.map((e) => e.toSendableJson()).toList(),
-          'maxBet': gameHandler.game.getMaxMoneyBetable(),
-          'currentBet': gameHandler.game.bettedAmount,
-        },
-      );
     });
     if (!players.hasEnoughPlayers()) return false;
     await gameHandler.secureSend(
@@ -179,6 +180,18 @@ class GameMoves {
     if (!players.hasEnoughPlayers()) return false;
     players[1].socketStream.stream.listen((event) async {
       if (secondBetted.isCompleted) return;
+      if (players.hasEnoughPlayers()) {
+        await gameHandler.secureSend(
+          players[1],
+          {
+            'message': 'You have made a bet',
+            'action': 'startBet',
+            'lastDices': players.map((e) => e.toSendableJson()).toList(),
+            'maxBet': gameHandler.game.getMaxMoneyBetable(),
+            'currentBet': gameHandler.game.bettedAmount,
+          },
+        );
+      }
       if (event['action'] == 'raiseBet') {
         final int amount = event['amount'];
         try {
@@ -194,17 +207,6 @@ class GameMoves {
         if (players.hasEnoughPlayers()) players[1].folded();
         secondBetted.complete(-1);
       }
-      if (!players.hasEnoughPlayers()) return;
-      await gameHandler.secureSend(
-        players[1],
-        {
-          'message': 'You have made a bet',
-          'action': 'startBet',
-          'lastDices': players.map((e) => e.toSendableJson()).toList(),
-          'maxBet': gameHandler.game.getMaxMoneyBetable(),
-          'currentBet': gameHandler.game.bettedAmount,
-        },
-      );
     });
 
     if (!players.hasEnoughPlayers()) return false;
@@ -237,23 +239,24 @@ class GameMoves {
       if (!players.hasEnoughPlayers()) return false;
       players.first.socketStream.stream.listen((event) async {
         if (thirdBetted.isCompleted) return;
+        if (players.hasEnoughPlayers()) {
+          await gameHandler.secureSend(
+            players.first,
+            {
+              'message': 'You have made a bet',
+              'action': 'startBet',
+              'lastDices': players.map((e) => e.toSendableJson()).toList(),
+              'maxBet': gameHandler.game.getMaxMoneyBetable(),
+              'currentBet': gameHandler.game.bettedAmount,
+            },
+          );
+        }
         if (event['action'] == 'check') {
           thirdBetted.complete(0);
         } else if (event['action'] == 'fold') {
           if (players.hasEnoughPlayers()) players.first.folded();
           thirdBetted.complete(-1);
         }
-        if (!players.hasEnoughPlayers()) return;
-        await gameHandler.secureSend(
-          players.first,
-          {
-            'message': 'You have made a bet',
-            'action': 'startBet',
-            'lastDices': players.map((e) => e.toSendableJson()).toList(),
-            'maxBet': gameHandler.game.getMaxMoneyBetable(),
-            'currentBet': gameHandler.game.bettedAmount,
-          },
-        );
       });
       if (!players.hasEnoughPlayers()) return false;
       await gameHandler.secureSend(
