@@ -20,7 +20,7 @@ class GameMoves {
       print(event);
       if (event['action'] == 'endDice') {
         if (rolledDice.isCompleted) return;
-        if (isFirstRoll || gameHandler.game.players.length != 2) {
+        if (!isFirstRoll || gameHandler.game.players.length != 2) {
           player.finishedRoll = true;
         }
         rolledDice.complete(false);
